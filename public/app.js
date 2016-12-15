@@ -62,26 +62,28 @@
         },
 
         onPlayerRuned: function(data) {
+            App.players[data.player.mySocketId].course = data.player.course;
+            App.Player.runPlayer(data.player);
 
-            if ( App.mySocketId !== data.player.mySocketId ) {
+            /*if ( App.mySocketId !== data.player.mySocketId ) {
                 App.players[data.player.mySocketId].course = data.player.course;
                 App.Player.runPlayer(data.player);
             } else {
                 var interpolation = App.players[App.mySocketId].posX - data.player.posX;
-                //console.log(interpolation);
-            }
+            }*/
         },
 
         onPlayerStoped: function(data) {
+            App.Player.stopPlayer(data.player);
 
-            if ( App.mySocketId !== data.player.mySocketId ) {
+            /*if ( App.mySocketId !== data.player.mySocketId ) {
 
-                /*var interpolation = {};
-                interpolation.x = data.player.posX - App.players[data.player.mySocketId].posX;
-                interpolation.y = data.player.posY - App.players[data.player.mySocketId].posY;*/
+                //var interpolation = {};
+                //interpolation.x = data.player.posX - App.players[data.player.mySocketId].posX;
+                //interpolation.y = data.player.posY - App.players[data.player.mySocketId].posY;
 
                 App.Player.stopPlayer(data.player);
-            }
+            }*/
         },
 
         onPlayerJoinedGame: function(data) {
@@ -329,13 +331,13 @@
                 if ((eventObject.keyCode === 39) && (App.Player.canRun === true) ) {
                     App.Player.canRun = false;
                     App.players[App.mySocketId].course = 'right';
-                    App.Host.runHostPlayer();
+                    //App.Host.runHostPlayer();
                     IO.socket.emit('playerRun', { course: App.players[App.mySocketId].course, player: App.players[App.mySocketId] });
                 }
                 if ((eventObject.keyCode === 37) && (App.Player.canRun === true) ) {
                     App.Player.canRun = false;
                     App.players[App.mySocketId].course = 'left';
-                    App.Host.runHostPlayer();
+                    //App.Host.runHostPlayer();
                     IO.socket.emit('playerRun', { course: App.players[App.mySocketId].course, player: App.players[App.mySocketId] });
                 }
                 if ((eventObject.keyCode === 38) && (App.Player.canRun === true) ) {
@@ -360,6 +362,13 @@
                     }
 
                 });
+
+                if (eventObject.keyCode === 27) {
+                    $("#statFieldArea").css({'display': 'block'});
+                    App.$doc.on('keyup', function(){
+                        $("#statFieldArea").css({'display': 'none'});
+                    });
+                }
             },
 
             runHostPlayer: function() {
@@ -385,8 +394,6 @@
                 }
                 refresh();
             }
-
-
 
         },
 
@@ -439,7 +446,6 @@
                                                        .append( $('<div/>').addClass('statContainerItemDead').text( 'Dead:' + data.dead))
                                     );
             },
-
 
             runPlayer: function(player) {
                 var player = player;
