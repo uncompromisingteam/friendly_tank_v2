@@ -62,15 +62,14 @@
         },
 
         onPlayerRuned: function(data) {
-            App.players[data.player.mySocketId].course = data.player.course;
-            App.Player.runPlayer(data.player);
 
-            /*if ( App.mySocketId !== data.player.mySocketId ) {
+            if ( App.mySocketId !== data.player.mySocketId ) {
                 App.players[data.player.mySocketId].course = data.player.course;
                 App.Player.runPlayer(data.player);
             } else {
+                App.Host.runHostPlayer();
                 var interpolation = App.players[App.mySocketId].posX - data.player.posX;
-            }*/
+            }
         },
 
         onPlayerStoped: function(data) {
