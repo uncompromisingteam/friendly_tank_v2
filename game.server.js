@@ -7,6 +7,7 @@ var positions = [
     { posX: 1900, posY: 1500, course: 'left'}
 ];
 var games = {};
+var actions = [{}];
 
 
 exports.initGame = function(sio, socket){
@@ -24,6 +25,8 @@ exports.initGame = function(sio, socket){
 
     gameSocket.on('playerRun', playerRun);
     gameSocket.on('playerStop', playerStop);
+
+    gameSocket.on('regularUpdate', regularUpdate);
 
 
     gameSocket.on('disconnect', playerDisconnect);
@@ -71,6 +74,7 @@ function hostBuildGame(data) {
 
     io.sockets.in(this.gameId).emit('buildedGame', { game: newGame, player: newPlayer, playerActive: 0, players: newGame.players });
     incTracking();
+    //regularUpdateForClient();
 
     function incTracking(){
         var timeout = setInterval(function(){
@@ -84,6 +88,14 @@ function hostBuildGame(data) {
                 incTracking();
             }
         }, 60000);
+    }
+
+    function regularUpdateForClient() {
+        //var players = games[this.gameId].players;
+        //console.log(  games[data.gameId] );
+        setInterval(function() {
+            io.sockets.in(this.gameId).emit('regularUpdateForClient', { players: games[data.gameId].players });
+        }, 50)
     }
 
 }
@@ -134,6 +146,7 @@ function playerJoinGame(data) {
                                                                   //gameId: data.gameId,
                                                                   hostSocketId: games[data.gameId].hostSocketId
                                                               });
+            //regularUpdateForClient();
 
         } else { passCheck = false;
             this.emit('playerJoinedGame', { passCheck: passCheck });
@@ -160,12 +173,18 @@ function playerStop(data){
     io.sockets.in(this.gameId).emit('playerStoped', { player: games[this.gameId].players[data.player.mySocketId] });
 }
 
+function regularUpdate(data) {
+    games[this.gameId].players = data.players;
+}
+
 function playerDisconnect(data) {
 
     if ( this.gameId !== undefined ) {
 
         delete games[this.gameId].players[this.id];
         games[this.gameId].playersNums -=1;
+
+        io.sockets.in(this.gameId).emit('playerDisconnect', { playerSocketId: this.id });
 
         if ( games[this.gameId].playersNums === 0 ) { delete games[this.gameId]; }
     }

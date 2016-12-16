@@ -30,6 +30,10 @@
             IO.socket.on('playerRuned', IO.onPlayerRuned);
             IO.socket.on('playerStoped', IO.onPlayerStoped);
 
+            IO.socket.on('regularUpdateForClient', IO.onRegularUpdateForClient);
+
+            IO.socket.on('playerDisconnect', IO.onPlayerDisconnect);
+
         },
 
         onConnected: function(data) {
@@ -67,22 +71,22 @@
                 App.players[data.player.mySocketId].course = data.player.course;
                 App.Player.runPlayer(data.player);
             } else {
-                App.Host.runHostPlayer();
+                // App.Host.runHostPlayer();
                 var interpolation = App.players[App.mySocketId].posX - data.player.posX;
             }
         },
 
         onPlayerStoped: function(data) {
-            App.Player.stopPlayer(data.player);
+            //App.Player.stopPlayer(data.player);
 
-            /*if ( App.mySocketId !== data.player.mySocketId ) {
+            if ( App.mySocketId !== data.player.mySocketId ) {
 
                 //var interpolation = {};
                 //interpolation.x = data.player.posX - App.players[data.player.mySocketId].posX;
                 //interpolation.y = data.player.posY - App.players[data.player.mySocketId].posY;
 
                 App.Player.stopPlayer(data.player);
-            }*/
+            }
         },
 
         onPlayerJoinedGame: function(data) {
@@ -104,7 +108,17 @@
                     App.Player.createPlayer( data.player );
                 }
 
+                //App.regularUpdate();
+
             }
+        },
+
+        onPlayerDisconnect: function(data) {
+            App.Player.refreshPlayerAfterDisconnect(data.playerSocketId);
+        },
+
+        onRegularUpdateForClient: function(data) {
+            App.players = data.players;
         }
     }
 
@@ -114,6 +128,7 @@
         mySocketId: '',
         players: {},
         playerActive: null,
+        regularUpdateTimer: null,
         levelPlan : [
           "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",   // (1)
           "w                 wwww                 w",   // (2)
@@ -268,6 +283,12 @@
 
         },
 
+        regularUpdate: function() {
+            setInterval(function() {
+                IO.socket.emit('regularUpdate', { players: App.players })
+            }, 100);
+        },
+
         Host: {
 
             refreshAnimateFrameID: null,
@@ -330,13 +351,15 @@
                 if ((eventObject.keyCode === 39) && (App.Player.canRun === true) ) {
                     App.Player.canRun = false;
                     App.players[App.mySocketId].course = 'right';
-                    //App.Host.runHostPlayer();
+                    App.Host.runHostPlayer();
+                    console.log( App.Host.getTime() );
                     IO.socket.emit('playerRun', { course: App.players[App.mySocketId].course, player: App.players[App.mySocketId] });
                 }
                 if ((eventObject.keyCode === 37) && (App.Player.canRun === true) ) {
                     App.Player.canRun = false;
                     App.players[App.mySocketId].course = 'left';
-                    //App.Host.runHostPlayer();
+                    App.Host.runHostPlayer();
+                    console.log( App.Host.getTime() );
                     IO.socket.emit('playerRun', { course: App.players[App.mySocketId].course, player: App.players[App.mySocketId] });
                 }
                 if ((eventObject.keyCode === 38) && (App.Player.canRun === true) ) {
@@ -392,6 +415,11 @@
 
                 }
                 refresh();
+            },
+
+            getTime: function() {
+                var date = new Date().getTime();
+                return date;
             }
 
         },
@@ -473,6 +501,10 @@
 
             stopPlayer: function(player) {
                 cancelAnimationFrame( App.Player.refreshAnimateFrameID[player.mySocketId] );
+            },
+
+            refreshPlayerAfterDisconnect: function(playerSocketId) {
+                $('.tankContainer_'+ playerSocketId ).remove();
             },
 
             getCourseURL: function(course) {
